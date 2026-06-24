@@ -13,8 +13,7 @@ import javax.inject.Inject;
  *
  * <p>Applies to both settings and project targets: {@code Settings} and {@code Project} are both
  * {@link ExtensionAware}, and {@link FlowScope}/{@link FlowProviders} are injectable in both
- * contexts, so the same plugin id can be used in {@code settings.gradle(.kts)} and
- * {@code build.gradle(.kts)}.
+ * contexts, so the same plugin id works in {@code settings.gradle(.kts)} and {@code build.gradle(.kts)}.
  */
 public abstract class BuildFlowPlugin implements Plugin<ExtensionAware> {
 

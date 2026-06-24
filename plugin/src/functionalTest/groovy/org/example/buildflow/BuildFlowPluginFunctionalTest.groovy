@@ -17,16 +17,16 @@ class BuildFlowPluginFunctionalTest extends Specification {
     @TempDir
     File projectDir
 
-    /** A user-authored behavior: a plain {@code Consumer<BuildOutcome>} carrying its own state. */
+    /** A user-authored behavior: a named {@code BuildFinishedAction} carrying its own state. */
     private static final String PRINT_CONSUMER = '''
         import org.example.buildflow.BuildOutcome
-        import java.util.function.Consumer
+        import org.example.buildflow.BuildFinishedAction
 
-        class PrintBuildResult implements Consumer<BuildOutcome> {
+        class PrintBuildResult implements BuildFinishedAction<BuildOutcome> {
             String successMessage = "Build finished: SUCCESS"
             String failureMessage = "Build finished: FAILED"
 
-            void accept(BuildOutcome outcome) {
+            void execute(BuildOutcome outcome) {
                 println outcome.failed ? failureMessage : successMessage
             }
         }
@@ -37,9 +37,9 @@ class BuildFlowPluginFunctionalTest extends Specification {
         package com.example;
 
         import org.example.buildflow.BuildOutcome;
-        import java.util.function.Consumer;
+        import org.example.buildflow.BuildFinishedAction;
 
-        public class PrintOutcome implements Consumer<BuildOutcome> {
+        public class PrintOutcome implements BuildFinishedAction<BuildOutcome> {
             private final String prefix;
 
             public PrintOutcome(String prefix) {
@@ -47,7 +47,7 @@ class BuildFlowPluginFunctionalTest extends Specification {
             }
 
             @Override
-            public void accept(BuildOutcome outcome) {
+            public void execute(BuildOutcome outcome) {
                 System.out.println(prefix + (outcome.isFailed() ? "FAILED" : "SUCCESS"));
             }
         }
@@ -133,29 +133,28 @@ class BuildFlowPluginFunctionalTest extends Specification {
         result.output.contains("all good ✨")
     }
 
-    def "provides access to injected services via a ServiceAccess type"() {
+    def "provides access to injected services via a BuildOutcome subinterface"() {
         given:
         file("settings.gradle") << ""
         file("build.gradle") << """
             import org.example.buildflow.BuildOutcome
             import org.example.buildflow.BuildFinishedAction
-            import org.example.buildflow.ServiceAccess
             import org.gradle.api.provider.ProviderFactory
             import javax.inject.Inject
 
             plugins { id('org.example.buildflow') }
 
-            interface MyServices extends ServiceAccess {
+            interface MyOutcome extends BuildOutcome {
                 @Inject ProviderFactory getProviders()
             }
 
-            class CheckService implements BuildFinishedAction<MyServices> {
-                void execute(BuildOutcome outcome, MyServices services) {
-                    println "marker=" + services.providers.systemProperty("marker").get()
+            class CheckService implements BuildFinishedAction<MyOutcome> {
+                void execute(MyOutcome outcome) {
+                    println "marker=" + outcome.providers.systemProperty("marker").get()
                 }
             }
 
-            buildFlow.onBuildFinished(MyServices, new CheckService())
+            buildFlow.onBuildFinished(MyOutcome, new CheckService())
         """
 
         when:
@@ -382,23 +381,22 @@ class BuildFlowPluginFunctionalTest extends Specification {
             }
             import org.example.buildflow.BuildOutcome
             import org.example.buildflow.BuildFinishedAction
-            import org.example.buildflow.ServiceAccess
             import org.gradle.api.provider.ProviderFactory
             import javax.inject.Inject
 
             apply plugin: 'org.example.buildflow'
 
-            interface MyServices extends ServiceAccess {
+            interface MyOutcome extends BuildOutcome {
                 @Inject ProviderFactory getProviders()
             }
 
-            class CheckService implements BuildFinishedAction<MyServices> {
-                void execute(BuildOutcome outcome, MyServices services) {
-                    println "marker=" + services.providers.systemProperty("marker").get()
+            class CheckService implements BuildFinishedAction<MyOutcome> {
+                void execute(MyOutcome outcome) {
+                    println "marker=" + outcome.providers.systemProperty("marker").get()
                 }
             }
 
-            buildFlow.onBuildFinished(MyServices, new CheckService())
+            buildFlow.onBuildFinished(MyOutcome, new CheckService())
         """
 
         when: "the build runs for the first time with the configuration cache"

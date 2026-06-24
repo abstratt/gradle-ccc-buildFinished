@@ -1,23 +1,45 @@
 package org.example.buildflow;
 
 import org.gradle.api.flow.BuildWorkResult;
+import org.gradle.api.provider.Property;
 
 import java.util.Optional;
 
 /**
- * A friendly, stable view of a build's outcome — the spiritual successor to the old
+ * A friendly, stable view of a finished build's outcome — the successor to the old
  * {@code org.gradle.BuildResult} that {@code Gradle.buildFinished {}} handlers received.
  *
- * <p>Shields consumer code from the incubating {@link BuildWorkResult}.
+ * <p>Subinterface it to declare the Gradle services your action needs, as {@code @Inject} getters;
+ * they are injected onto the outcome your action receives:
+ *
+ * <pre>{@code
+ * interface MyOutcome extends BuildOutcome {
+ *     @Inject ProviderFactory getProviders();
+ * }
+ *
+ * buildFlow.onBuildFinished(MyOutcome.class, outcome -> {
+ *     if (outcome.isFailed()) { ... }
+ *     outcome.getProviders().systemProperty("x").get();
+ * });
+ * }</pre>
  */
 public interface BuildOutcome {
 
     /** {@code true} if the build's work failed. */
-    boolean isFailed();
+    default boolean isFailed() {
+        return getBuildWorkResult().get().getFailure().isPresent();
+    }
 
     /** {@code true} if the build's work completed successfully. */
-    boolean isSuccessful();
+    default boolean isSuccessful() {
+        return !isFailed();
+    }
 
-    /** The failure that occurred, if any. */
-    Optional<Throwable> getFailure();
+    /** The failure that ended the build, if any. */
+    default Optional<Throwable> getFailure() {
+        return getBuildWorkResult().get().getFailure();
+    }
+
+    /** The underlying Gradle result this outcome is based on. */
+    Property<BuildWorkResult> getBuildWorkResult();
 }

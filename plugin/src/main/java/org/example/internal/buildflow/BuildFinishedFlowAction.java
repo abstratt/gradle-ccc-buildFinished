@@ -2,24 +2,17 @@ package org.example.internal.buildflow;
 
 import org.example.buildflow.BuildFinishedAction;
 import org.example.buildflow.BuildOutcome;
-import org.example.buildflow.ServiceAccess;
 import org.gradle.api.flow.BuildWorkResult;
 import org.gradle.api.flow.FlowAction;
 import org.gradle.api.flow.FlowParameters;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Optional;
 
 /**
- * Internal adapter: the single isolated {@link FlowAction} that backs the {@code buildFlow} DSL.
- *
- * <p>Consumers never see this type. They provide a plain {@link BuildFinishedAction}, which is carried
- * here as an isolated parameter and invoked once the build finishes. Using a Flow Action is purely an
- * implementation detail.
- *
- * <p>When a {@link ServiceAccess} bundle is supplied, it is created (decorated, with {@code @Inject}
- * services wired) by the DSL and passed in as a parameter; Gradle re-wires its services across the
- * configuration cache.
+ * Internal {@link FlowAction} backing the {@code buildFlow} DSL. It carries the decorated
+ * outcome, the user action, and the build result as isolated parameters; once the build finishes it
+ * feeds the result into the outcome and invokes the action. Gradle re-wires the outcome's injected
+ * services across the configuration cache.
  */
 public abstract class BuildFinishedFlowAction
         implements FlowAction<BuildFinishedFlowAction.Parameters> {
@@ -30,20 +23,19 @@ public abstract class BuildFinishedFlowAction
         @Input
         Property<BuildWorkResult> getBuildResult();
 
-        /** The user-supplied behavior to run once the build finishes. */
+        /** The decorated outcome instance (with any injected services) handed to the action. */
         @Input
-        Property<BuildFinishedAction<ServiceAccess>> getBehavior();
+        Property<BuildOutcome> getOutcome();
 
-        /** The decorated {@link ServiceAccess} bundle handed to the behavior, if any. */
+        /** The user-supplied action to run once the build finishes. */
         @Input
-        @Optional
-        Property<ServiceAccess> getServices();
+        Property<BuildFinishedAction<BuildOutcome>> getAction();
     }
 
     @Override
     public void execute(Parameters parameters) {
-        BuildOutcome outcome = new DefaultBuildOutcome(parameters.getBuildResult().get());
-        ServiceAccess services = parameters.getServices().getOrNull();
-        parameters.getBehavior().get().execute(outcome, services);
+        BuildOutcome outcome = parameters.getOutcome().get();
+        outcome.getBuildWorkResult().set(parameters.getBuildResult().get());
+        parameters.getAction().get().execute(outcome);
     }
 }

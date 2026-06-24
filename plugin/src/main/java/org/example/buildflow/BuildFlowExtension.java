@@ -1,41 +1,37 @@
 package org.example.buildflow;
 
-import java.util.function.Consumer;
-
 /**
- * The {@code buildFlow} DSL. Provides a sweet, {@code buildFinished}-like syntax for reacting to the
- * end of a build.
+ * DSL for reacting to Gradle build lifecycle events — currently, the end of the build. A
+ * configuration-cache-friendly successor to {@code Gradle.buildFinished {}}.
  *
- * <p>Consumers supply plain behavior describing what should happen when the build finishes. The DSL
- * runs it inside an isolated Flow Action — that detail is hidden — and the configuration cache
- * isolates the behavior like any other action input, so it must not capture non-serializable build
- * state. When the behavior needs Gradle services, declare them on a {@link ServiceAccess} type and
- * use the {@link #onBuildFinished(Class, BuildFinishedAction)} overload.
+ * <p>Register a {@link BuildFinishedAction}. When the action needs Gradle services, declare them on a
+ * {@link BuildOutcome} subinterface and pass its type to
+ * {@link #onBuildFinished(Class, BuildFinishedAction)}.
  */
 public interface BuildFlowExtension {
 
     /**
-     * Registers behavior to run when the build finishes, receiving the {@link BuildOutcome} and a
-     * bundle of Gradle services.
+     * Registers an action to run when the build finishes, receiving the {@link BuildOutcome}.
      *
-     * <p>Declare the services you need on a {@link ServiceAccess} specialization (typically an
-     * abstract class with {@code @Inject} getters). Gradle instantiates it fresh at execution time —
-     * it is never serialized — so injected services stay configuration-cache safe.
+     * <p>The action must be compatible with the configuration cache: it must not capture live build
+     * state.
      *
-     * @param serviceAccessType the {@link ServiceAccess} type declaring the required services
-     * @param action            the action to run once the build finishes
-     * @param <S>               the service-access type
+     * @param action the action to run once the build finishes
      */
-    <S extends ServiceAccess> void onBuildFinished(
-            Class<S> serviceAccessType, BuildFinishedAction<? super S> action);
+    default void onBuildFinished(BuildFinishedAction<BuildOutcome> action) {
+        onBuildFinished(BuildOutcome.class, action);
+    }
 
     /**
-     * Registers behavior to run when the build finishes, receiving the {@link BuildOutcome}.
+     * Registers an action to run when the build finishes, receiving a {@link BuildOutcome}
+     * subinterface with the Gradle services it declares.
      *
-     * <p>The behavior is executed in an isolated context. Any state it holds is captured into the
-     * configuration cache, so it must be serializable and must not reference live build state.
+     * <p>Declare the services as {@code @Inject} getters on a {@link BuildOutcome} subinterface.
      *
-     * @param behavior the action to run once the build finishes
+     * @param outcomeType the {@link BuildOutcome} subinterface declaring the required services
+     * @param action      the action to run once the build finishes
+     * @param <O>         the outcome subinterface type
      */
-    void onBuildFinished(Consumer<BuildOutcome> behavior);
+    <O extends BuildOutcome> void onBuildFinished(
+            Class<O> outcomeType, BuildFinishedAction<? super O> action);
 }
