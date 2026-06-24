@@ -1,4 +1,4 @@
-package org.example.buildflow;
+package org.example.buildfinished;
 
 /**
  * DSL for reacting to Gradle build lifecycle events — currently, the end of the build. A
@@ -8,7 +8,7 @@ package org.example.buildflow;
  * {@link BuildOutcome} subinterface and pass its type to
  * {@link #onBuildFinished(Class, BuildFinishedAction)}.
  */
-public interface BuildFlowExtension {
+public interface BuildLifecycleExtension {
 
     /**
      * Registers an action to run when the build finishes, receiving the {@link BuildOutcome}.

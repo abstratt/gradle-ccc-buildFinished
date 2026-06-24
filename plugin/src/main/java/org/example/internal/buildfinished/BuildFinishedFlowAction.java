@@ -1,7 +1,7 @@
-package org.example.internal.buildflow;
+package org.example.internal.buildfinished;
 
-import org.example.buildflow.BuildFinishedAction;
-import org.example.buildflow.BuildOutcome;
+import org.example.buildfinished.BuildFinishedAction;
+import org.example.buildfinished.BuildOutcome;
 import org.gradle.api.flow.BuildWorkResult;
 import org.gradle.api.flow.FlowAction;
 import org.gradle.api.flow.FlowParameters;
@@ -9,7 +9,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 
 /**
- * Internal {@link FlowAction} backing the {@code buildFlow} DSL. It carries the decorated
+ * Internal {@link FlowAction} backing the {@code buildLifecycle} DSL. It carries the decorated
  * outcome, the user action, and the build result as isolated parameters; once the build finishes it
  * feeds the result into the outcome and invokes the action. Gradle re-wires the outcome's injected
  * services across the configuration cache.

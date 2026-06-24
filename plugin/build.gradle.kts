@@ -48,9 +48,9 @@ testing {
 
 gradlePlugin {
     // Define the plugin
-    val buildFlow by plugins.creating {
-        id = "org.example.buildflow"
-        implementationClass = "org.example.internal.buildflow.BuildFlowPlugin"
+    val buildFinished by plugins.creating {
+        id = "org.example.buildfinished"
+        implementationClass = "org.example.internal.buildfinished.BuildFinishedPlugin"
     }
 }
 

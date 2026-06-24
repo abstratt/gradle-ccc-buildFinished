@@ -1,4 +1,4 @@
-package org.example.buildflow;
+package org.example.buildfinished;
 
 import org.gradle.api.flow.BuildWorkResult;
 import org.gradle.api.provider.Property;
@@ -17,7 +17,7 @@ import java.util.Optional;
  *     @Inject ProviderFactory getProviders();
  * }
  *
- * buildFlow.onBuildFinished(MyOutcome.class, outcome -> {
+ * buildLifecycle.onBuildFinished(MyOutcome.class, outcome -> {
  *     if (outcome.isFailed()) { ... }
  *     outcome.getProviders().systemProperty("x").get();
  * });

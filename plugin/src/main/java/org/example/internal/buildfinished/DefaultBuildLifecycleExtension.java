@@ -1,8 +1,8 @@
-package org.example.internal.buildflow;
+package org.example.internal.buildfinished;
 
-import org.example.buildflow.BuildFinishedAction;
-import org.example.buildflow.BuildFlowExtension;
-import org.example.buildflow.BuildOutcome;
+import org.example.buildfinished.BuildFinishedAction;
+import org.example.buildfinished.BuildLifecycleExtension;
+import org.example.buildfinished.BuildOutcome;
 import org.gradle.api.flow.FlowProviders;
 import org.gradle.api.flow.FlowScope;
 import org.gradle.api.model.ObjectFactory;
@@ -10,20 +10,20 @@ import org.gradle.api.model.ObjectFactory;
 import javax.inject.Inject;
 
 /**
- * Default implementation of {@link BuildFlowExtension}.
+ * Default implementation of {@link BuildLifecycleExtension}.
  *
  * <p>Instantiates the (decorated) {@link BuildOutcome} via {@link ObjectFactory} so its
  * {@code @Inject} services are wired, wires the build result from
  * {@link FlowProviders#getBuildWorkResult()}, and carries both plus the user action as isolated
  * parameters of {@link BuildFinishedFlowAction}.
  */
-public abstract class DefaultBuildFlowExtension implements BuildFlowExtension {
+public abstract class DefaultBuildLifecycleExtension implements BuildLifecycleExtension {
 
     private final FlowScope flowScope;
     private final FlowProviders flowProviders;
 
     @Inject
-    public DefaultBuildFlowExtension(FlowScope flowScope, FlowProviders flowProviders) {
+    public DefaultBuildLifecycleExtension(FlowScope flowScope, FlowProviders flowProviders) {
         this.flowScope = flowScope;
         this.flowProviders = flowProviders;
     }

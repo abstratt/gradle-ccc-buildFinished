@@ -1,4 +1,4 @@
-package org.example.buildflow
+package org.example.buildfinished
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
@@ -6,21 +6,21 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 /**
- * Functional tests for the {@code org.example.buildflow} plugin, exercised through Gradle TestKit
+ * Functional tests for the {@code org.example.buildfinished} plugin, exercised through Gradle TestKit
  * against real builds.
  *
  * <p>Each build defines its own behavior as a plain {@code Consumer<BuildOutcome>} — the user-facing
  * type is not coupled to the Flow Actions API.
  */
-class BuildFlowPluginFunctionalTest extends Specification {
+class BuildFinishedPluginFunctionalTest extends Specification {
 
     @TempDir
     File projectDir
 
     /** A user-authored behavior: a named {@code BuildFinishedAction} carrying its own state. */
     private static final String PRINT_CONSUMER = '''
-        import org.example.buildflow.BuildOutcome
-        import org.example.buildflow.BuildFinishedAction
+        import org.example.buildfinished.BuildOutcome
+        import org.example.buildfinished.BuildFinishedAction
 
         class PrintBuildResult implements BuildFinishedAction<BuildOutcome> {
             String successMessage = "Build finished: SUCCESS"
@@ -36,8 +36,8 @@ class BuildFlowPluginFunctionalTest extends Specification {
     private static final String PRINT_OUTCOME_JAVA = '''
         package com.example;
 
-        import org.example.buildflow.BuildOutcome;
-        import org.example.buildflow.BuildFinishedAction;
+        import org.example.buildfinished.BuildOutcome;
+        import org.example.buildfinished.BuildFinishedAction;
 
         public class PrintOutcome implements BuildFinishedAction<BuildOutcome> {
             private final String prefix;
@@ -57,17 +57,17 @@ class BuildFlowPluginFunctionalTest extends Specification {
     private static final String LAMBDA_PLUGIN_JAVA = '''
         package com.example;
 
-        import org.example.buildflow.BuildFlowExtension;
-        import org.example.internal.buildflow.BuildFlowPlugin;
+        import org.example.buildfinished.BuildLifecycleExtension;
+        import org.example.internal.buildfinished.BuildFinishedPlugin;
         import org.gradle.api.Plugin;
         import org.gradle.api.Project;
 
         public class LambdaPlugin implements Plugin<Project> {
             @Override
             public void apply(Project project) {
-                project.getPluginManager().apply(BuildFlowPlugin.class);
-                BuildFlowExtension buildFlow = project.getExtensions().getByType(BuildFlowExtension.class);
-                buildFlow.onBuildFinished(outcome ->
+                project.getPluginManager().apply(BuildFinishedPlugin.class);
+                BuildLifecycleExtension buildLifecycle = project.getExtensions().getByType(BuildLifecycleExtension.class);
+                buildLifecycle.onBuildFinished(outcome ->
                         System.out.println("Java lambda: " + (outcome.isFailed() ? "FAILED" : "SUCCESS")));
             }
         }
@@ -89,9 +89,9 @@ class BuildFlowPluginFunctionalTest extends Specification {
         given:
         file("settings.gradle") << ""
         file("build.gradle") << """
-            plugins { id('org.example.buildflow') }
+            plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildFlow.onBuildFinished(new PrintBuildResult())
+            buildLifecycle.onBuildFinished(new PrintBuildResult())
         """
 
         when:
@@ -104,9 +104,9 @@ class BuildFlowPluginFunctionalTest extends Specification {
     def "runs the behavior exactly once when applied to settings"() {
         given:
         file("settings.gradle") << """
-            plugins { id('org.example.buildflow') }
+            plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildFlow.onBuildFinished(new PrintBuildResult())
+            buildLifecycle.onBuildFinished(new PrintBuildResult())
         """
         file("build.gradle") << ""
 
@@ -121,9 +121,9 @@ class BuildFlowPluginFunctionalTest extends Specification {
         given:
         file("settings.gradle") << ""
         file("build.gradle") << """
-            plugins { id('org.example.buildflow') }
+            plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildFlow.onBuildFinished(new PrintBuildResult(successMessage: 'all good ✨'))
+            buildLifecycle.onBuildFinished(new PrintBuildResult(successMessage: 'all good ✨'))
         """
 
         when:
@@ -137,12 +137,12 @@ class BuildFlowPluginFunctionalTest extends Specification {
         given:
         file("settings.gradle") << ""
         file("build.gradle") << """
-            import org.example.buildflow.BuildOutcome
-            import org.example.buildflow.BuildFinishedAction
+            import org.example.buildfinished.BuildOutcome
+            import org.example.buildfinished.BuildFinishedAction
             import org.gradle.api.provider.ProviderFactory
             import javax.inject.Inject
 
-            plugins { id('org.example.buildflow') }
+            plugins { id('org.example.buildfinished') }
 
             interface MyOutcome extends BuildOutcome {
                 @Inject ProviderFactory getProviders()
@@ -154,7 +154,7 @@ class BuildFlowPluginFunctionalTest extends Specification {
                 }
             }
 
-            buildFlow.onBuildFinished(MyOutcome, new CheckService())
+            buildLifecycle.onBuildFinished(MyOutcome, new CheckService())
         """
 
         when:
@@ -168,8 +168,8 @@ class BuildFlowPluginFunctionalTest extends Specification {
         given:
         file("settings.gradle") << ""
         file("build.gradle") << """
-            plugins { id('org.example.buildflow') }
-            buildFlow.onBuildFinished {
+            plugins { id('org.example.buildfinished') }
+            buildLifecycle.onBuildFinished {
                 println it.successful ? 'closure: SUCCESS' : 'closure: FAILED'
             }
         """
@@ -185,8 +185,8 @@ class BuildFlowPluginFunctionalTest extends Specification {
         given:
         file("settings.gradle.kts") << ""
         file("build.gradle.kts") << """
-            plugins { id("org.example.buildflow") }
-            buildFlow.onBuildFinished {
+            plugins { id("org.example.buildfinished") }
+            buildLifecycle.onBuildFinished {
                 println(if (it.isFailed) "lambda: FAILED" else "lambda: SUCCESS")
             }
         """
@@ -208,9 +208,9 @@ class BuildFlowPluginFunctionalTest extends Specification {
             buildscript {
                 dependencies { classpath files($filesArg) }
             }
-            apply plugin: 'org.example.buildflow'
+            apply plugin: 'org.example.buildfinished'
             def label = 'closure'
-            buildFlow.onBuildFinished { outcome ->
+            buildLifecycle.onBuildFinished { outcome ->
                 println label + (outcome.successful ? ": SUCCESS" : ": FAILED")
             }
         """
@@ -241,8 +241,8 @@ class BuildFlowPluginFunctionalTest extends Specification {
             buildscript {
                 dependencies { classpath files($filesArg) }
             }
-            apply plugin: 'org.example.buildflow'
-            buildFlow.onBuildFinished { outcome ->
+            apply plugin: 'org.example.buildfinished'
+            buildLifecycle.onBuildFinished { outcome ->
                 // Referencing 'project' captures live build state — the isolation the Flow API enforces.
                 println "project name is " + project.name
             }
@@ -259,9 +259,9 @@ class BuildFlowPluginFunctionalTest extends Specification {
         given:
         file("settings.gradle") << ""
         file("build.gradle") << """
-            plugins { id('org.example.buildflow') }
+            plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildFlow.onBuildFinished(new PrintBuildResult(failureMessage: 'something broke 💥'))
+            buildLifecycle.onBuildFinished(new PrintBuildResult(failureMessage: 'something broke 💥'))
             tasks.register('boom') { doLast { throw new RuntimeException('kaboom') } }
         """
 
@@ -286,9 +286,9 @@ class BuildFlowPluginFunctionalTest extends Specification {
             buildscript {
                 dependencies { classpath files($filesArg) }
             }
-            apply plugin: 'org.example.buildflow'
+            apply plugin: 'org.example.buildfinished'
             $PRINT_CONSUMER
-            buildFlow.onBuildFinished(new PrintBuildResult())
+            buildLifecycle.onBuildFinished(new PrintBuildResult())
         """
 
         when: "the build runs for the first time with the configuration cache"
@@ -307,23 +307,23 @@ class BuildFlowPluginFunctionalTest extends Specification {
     }
 
     def "runs Java build logic provided as a binary plugin"() {
-        given: "a reusable Gradle plugin written in Java that registers buildFlow behavior"
+        given: "a reusable Gradle plugin written in Java that registers buildLifecycle behavior"
         writeIncludedBuild("com.example.ReportingPlugin", [
                 "PrintOutcome.java"   : PRINT_OUTCOME_JAVA,
                 "ReportingPlugin.java": '''
                     package com.example;
             
-                    import org.example.buildflow.BuildFlowExtension;
-                    import org.example.internal.buildflow.BuildFlowPlugin;
+                    import org.example.buildfinished.BuildLifecycleExtension;
+                    import org.example.internal.buildfinished.BuildFinishedPlugin;
                     import org.gradle.api.Plugin;
                     import org.gradle.api.Project;
             
                     public class ReportingPlugin implements Plugin<Project> {
                         @Override
                         public void apply(Project project) {
-                            project.getPluginManager().apply(BuildFlowPlugin.class);
-                            BuildFlowExtension buildFlow = project.getExtensions().getByType(BuildFlowExtension.class);
-                            buildFlow.onBuildFinished(outcome -> System.out.println("Java plugin: " + (outcome.isFailed() ? "FAILED" : "SUCCESS")));
+                            project.getPluginManager().apply(BuildFinishedPlugin.class);
+                            BuildLifecycleExtension buildLifecycle = project.getExtensions().getByType(BuildLifecycleExtension.class);
+                            buildLifecycle.onBuildFinished(outcome -> System.out.println("Java plugin: " + (outcome.isFailed() ? "FAILED" : "SUCCESS")));
                         }
                     }
                 ''',
@@ -379,12 +379,12 @@ class BuildFlowPluginFunctionalTest extends Specification {
             buildscript {
                 dependencies { classpath files($filesArg) }
             }
-            import org.example.buildflow.BuildOutcome
-            import org.example.buildflow.BuildFinishedAction
+            import org.example.buildfinished.BuildOutcome
+            import org.example.buildfinished.BuildFinishedAction
             import org.gradle.api.provider.ProviderFactory
             import javax.inject.Inject
 
-            apply plugin: 'org.example.buildflow'
+            apply plugin: 'org.example.buildfinished'
 
             interface MyOutcome extends BuildOutcome {
                 @Inject ProviderFactory getProviders()
@@ -396,7 +396,7 @@ class BuildFlowPluginFunctionalTest extends Specification {
                 }
             }
 
-            buildFlow.onBuildFinished(MyOutcome, new CheckService())
+            buildLifecycle.onBuildFinished(MyOutcome, new CheckService())
         """
 
         when: "the build runs for the first time with the configuration cache"
