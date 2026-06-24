@@ -17,7 +17,7 @@ import java.util.Optional;
  *     @Inject ProviderFactory getProviders();
  * }
  *
- * buildLifecycle.onBuildFinished(MyOutcome.class, outcome -> {
+ * buildFinished.onBuildFinished(MyOutcome.class, outcome -> {
  *     if (outcome.isFailed()) { ... }
  *     outcome.getProviders().systemProperty("x").get();
  * });

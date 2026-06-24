@@ -8,7 +8,7 @@ package org.example.buildfinished;
  * {@link BuildOutcome} subinterface and pass its type to
  * {@link #onBuildFinished(Class, BuildFinishedAction)}.
  */
-public interface BuildLifecycleExtension {
+public interface BuildFinishedExtension {
 
     /**
      * Registers an action to run when the build finishes, receiving the {@link BuildOutcome}.

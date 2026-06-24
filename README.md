@@ -9,7 +9,7 @@ closure can capture arbitrary, mutable build state. The supported replacement �
 `FlowScope` / `FlowProviders`) — is CC-safe but verbose: you write an isolated action class, a
 parameters interface, inject `FlowScope`/`FlowProviders`, and wire the build result in by hand.
 
-This prototype hides that ceremony behind a `buildLifecycle.onBuildFinished { … }` DSL while keeping
+This prototype hides that ceremony behind a `buildFinished.onBuildFinished { … }` DSL while keeping
 the isolation guarantees of Flow Actions.
 
 > **Status: prototype / exploration.** It uses the incubating Gradle Flow API and the `org.example.*`
@@ -29,7 +29,7 @@ plugins {
 ### React to the build finishing
 
 ```kotlin
-buildLifecycle.onBuildFinished { outcome ->
+buildFinished.onBuildFinished { outcome ->
     println(if (outcome.isFailed) "Build failed" else "Build succeeded")
 }
 ```
@@ -47,7 +47,7 @@ public interface NotifyOutcome extends BuildOutcome {
     @Inject ExecOperations getExec();
 }
 
-buildLifecycle.onBuildFinished(NotifyOutcome.class, outcome -> {
+buildFinished.onBuildFinished(NotifyOutcome.class, outcome -> {
     if (outcome.isFailed()) {
         outcome.getExec().exec(spec -> spec.commandLine("say", "build failed"));
     }
@@ -63,7 +63,7 @@ public class PrintResult implements BuildFinishedAction<BuildOutcome> {
     }
 }
 
-buildLifecycle.onBuildFinished(new PrintResult());
+buildFinished.onBuildFinished(new PrintResult());
 ```
 
 Works the same from Groovy (`{ outcome -> … }`), Kotlin (`{ outcome -> … }`), and Java lambdas.
@@ -86,7 +86,7 @@ remain available on a cache hit.
 
 | Type | Role |
 | --- | --- |
-| `buildLifecycle` | the DSL extension (`BuildLifecycleExtension`), on settings and project |
+| `buildFinished` | the DSL extension (`BuildFinishedExtension`), on settings and project |
 | `onBuildFinished(action)` | run `action` when the build finishes |
 | `onBuildFinished(Class<O>, action)` | same, with services declared on a `BuildOutcome` subinterface `O` |
 | `BuildOutcome` | result view: `isFailed()`, `isSuccessful()`, `getFailure()`; subinterface to add services |

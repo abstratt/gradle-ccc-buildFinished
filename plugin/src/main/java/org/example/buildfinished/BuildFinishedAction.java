@@ -6,8 +6,8 @@ import org.gradle.api.Action;
  * Behavior to run when the build finishes, receiving the {@link BuildOutcome}.
  *
  * <p>Implement it (or pass a lambda) and register it with
- * {@link BuildLifecycleExtension#onBuildFinished(BuildFinishedAction)}, or, when the behavior needs
- * Gradle services, with {@link BuildLifecycleExtension#onBuildFinished(Class, BuildFinishedAction)}
+ * {@link BuildFinishedExtension#onBuildFinished(BuildFinishedAction)}, or, when the behavior needs
+ * Gradle services, with {@link BuildFinishedExtension#onBuildFinished(Class, BuildFinishedAction)}
  * passing a {@link BuildOutcome} subinterface that declares them.
  *
  * @param <O> the {@link BuildOutcome} the action receives — the base type, or a subinterface

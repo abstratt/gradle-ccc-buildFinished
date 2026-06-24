@@ -1,6 +1,6 @@
 package org.example.internal.buildfinished;
 
-import org.example.buildfinished.BuildLifecycleExtension;
+import org.example.buildfinished.BuildFinishedExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.flow.FlowProviders;
 import org.gradle.api.flow.FlowScope;
@@ -9,7 +9,7 @@ import org.gradle.api.plugins.ExtensionAware;
 import javax.inject.Inject;
 
 /**
- * Registers the {@code buildLifecycle} DSL extension.
+ * Registers the {@code buildFinished} DSL extension.
  *
  * <p>Applies to both settings and project targets: {@code Settings} and {@code Project} are both
  * {@link ExtensionAware}, and {@link FlowScope}/{@link FlowProviders} are injectable in both
@@ -26,7 +26,7 @@ public abstract class BuildFinishedPlugin implements Plugin<ExtensionAware> {
     @Override
     public void apply(ExtensionAware target) {
         target.getExtensions().create(
-                BuildLifecycleExtension.class, "buildLifecycle", DefaultBuildLifecycleExtension.class,
+                BuildFinishedExtension.class, "buildFinished", DefaultBuildFinishedExtension.class,
                 getFlowScope(), getFlowProviders());
     }
 }

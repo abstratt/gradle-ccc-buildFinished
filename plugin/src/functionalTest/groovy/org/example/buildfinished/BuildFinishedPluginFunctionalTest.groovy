@@ -57,7 +57,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
     private static final String LAMBDA_PLUGIN_JAVA = '''
         package com.example;
 
-        import org.example.buildfinished.BuildLifecycleExtension;
+        import org.example.buildfinished.BuildFinishedExtension;
         import org.example.internal.buildfinished.BuildFinishedPlugin;
         import org.gradle.api.Plugin;
         import org.gradle.api.Project;
@@ -66,8 +66,8 @@ class BuildFinishedPluginFunctionalTest extends Specification {
             @Override
             public void apply(Project project) {
                 project.getPluginManager().apply(BuildFinishedPlugin.class);
-                BuildLifecycleExtension buildLifecycle = project.getExtensions().getByType(BuildLifecycleExtension.class);
-                buildLifecycle.onBuildFinished(outcome ->
+                BuildFinishedExtension buildFinished = project.getExtensions().getByType(BuildFinishedExtension.class);
+                buildFinished.onBuildFinished(outcome ->
                         System.out.println("Java lambda: " + (outcome.isFailed() ? "FAILED" : "SUCCESS")));
             }
         }
@@ -91,7 +91,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
         file("build.gradle") << """
             plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildLifecycle.onBuildFinished(new PrintBuildResult())
+            buildFinished.onBuildFinished(new PrintBuildResult())
         """
 
         when:
@@ -106,7 +106,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
         file("settings.gradle") << """
             plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildLifecycle.onBuildFinished(new PrintBuildResult())
+            buildFinished.onBuildFinished(new PrintBuildResult())
         """
         file("build.gradle") << ""
 
@@ -123,7 +123,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
         file("build.gradle") << """
             plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildLifecycle.onBuildFinished(new PrintBuildResult(successMessage: 'all good ✨'))
+            buildFinished.onBuildFinished(new PrintBuildResult(successMessage: 'all good ✨'))
         """
 
         when:
@@ -154,7 +154,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
                 }
             }
 
-            buildLifecycle.onBuildFinished(MyOutcome, new CheckService())
+            buildFinished.onBuildFinished(MyOutcome, new CheckService())
         """
 
         when:
@@ -169,7 +169,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
         file("settings.gradle") << ""
         file("build.gradle") << """
             plugins { id('org.example.buildfinished') }
-            buildLifecycle.onBuildFinished {
+            buildFinished.onBuildFinished {
                 println it.successful ? 'closure: SUCCESS' : 'closure: FAILED'
             }
         """
@@ -186,7 +186,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
         file("settings.gradle.kts") << ""
         file("build.gradle.kts") << """
             plugins { id("org.example.buildfinished") }
-            buildLifecycle.onBuildFinished {
+            buildFinished.onBuildFinished {
                 println(if (it.isFailed) "lambda: FAILED" else "lambda: SUCCESS")
             }
         """
@@ -210,7 +210,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
             }
             apply plugin: 'org.example.buildfinished'
             def label = 'closure'
-            buildLifecycle.onBuildFinished { outcome ->
+            buildFinished.onBuildFinished { outcome ->
                 println label + (outcome.successful ? ": SUCCESS" : ": FAILED")
             }
         """
@@ -242,7 +242,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
                 dependencies { classpath files($filesArg) }
             }
             apply plugin: 'org.example.buildfinished'
-            buildLifecycle.onBuildFinished { outcome ->
+            buildFinished.onBuildFinished { outcome ->
                 // Referencing 'project' captures live build state — the isolation the Flow API enforces.
                 println "project name is " + project.name
             }
@@ -261,7 +261,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
         file("build.gradle") << """
             plugins { id('org.example.buildfinished') }
             $PRINT_CONSUMER
-            buildLifecycle.onBuildFinished(new PrintBuildResult(failureMessage: 'something broke 💥'))
+            buildFinished.onBuildFinished(new PrintBuildResult(failureMessage: 'something broke 💥'))
             tasks.register('boom') { doLast { throw new RuntimeException('kaboom') } }
         """
 
@@ -288,7 +288,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
             }
             apply plugin: 'org.example.buildfinished'
             $PRINT_CONSUMER
-            buildLifecycle.onBuildFinished(new PrintBuildResult())
+            buildFinished.onBuildFinished(new PrintBuildResult())
         """
 
         when: "the build runs for the first time with the configuration cache"
@@ -307,13 +307,13 @@ class BuildFinishedPluginFunctionalTest extends Specification {
     }
 
     def "runs Java build logic provided as a binary plugin"() {
-        given: "a reusable Gradle plugin written in Java that registers buildLifecycle behavior"
+        given: "a reusable Gradle plugin written in Java that registers buildFinished behavior"
         writeIncludedBuild("com.example.ReportingPlugin", [
                 "PrintOutcome.java"   : PRINT_OUTCOME_JAVA,
                 "ReportingPlugin.java": '''
                     package com.example;
             
-                    import org.example.buildfinished.BuildLifecycleExtension;
+                    import org.example.buildfinished.BuildFinishedExtension;
                     import org.example.internal.buildfinished.BuildFinishedPlugin;
                     import org.gradle.api.Plugin;
                     import org.gradle.api.Project;
@@ -322,8 +322,8 @@ class BuildFinishedPluginFunctionalTest extends Specification {
                         @Override
                         public void apply(Project project) {
                             project.getPluginManager().apply(BuildFinishedPlugin.class);
-                            BuildLifecycleExtension buildLifecycle = project.getExtensions().getByType(BuildLifecycleExtension.class);
-                            buildLifecycle.onBuildFinished(outcome -> System.out.println("Java plugin: " + (outcome.isFailed() ? "FAILED" : "SUCCESS")));
+                            BuildFinishedExtension buildFinished = project.getExtensions().getByType(BuildFinishedExtension.class);
+                            buildFinished.onBuildFinished(outcome -> System.out.println("Java plugin: " + (outcome.isFailed() ? "FAILED" : "SUCCESS")));
                         }
                     }
                 ''',
@@ -396,7 +396,7 @@ class BuildFinishedPluginFunctionalTest extends Specification {
                 }
             }
 
-            buildLifecycle.onBuildFinished(MyOutcome, new CheckService())
+            buildFinished.onBuildFinished(MyOutcome, new CheckService())
         """
 
         when: "the build runs for the first time with the configuration cache"
