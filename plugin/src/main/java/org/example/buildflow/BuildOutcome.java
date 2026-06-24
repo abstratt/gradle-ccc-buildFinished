@@ -8,33 +8,16 @@ import java.util.Optional;
  * A friendly, stable view of a build's outcome — the spiritual successor to the old
  * {@code org.gradle.BuildResult} that {@code Gradle.buildFinished {}} handlers received.
  *
- * <p>Wraps the incubating {@link BuildWorkResult} so consumer code does not depend on it directly.
+ * <p>Shields consumer code from the incubating {@link BuildWorkResult}.
  */
-public final class BuildOutcome {
-
-    private final BuildWorkResult result;
-
-    public BuildOutcome(BuildWorkResult result) {
-        this.result = result;
-    }
+public interface BuildOutcome {
 
     /** {@code true} if the build's work failed. */
-    public boolean isFailed() {
-        return result.getFailure().isPresent();
-    }
+    boolean isFailed();
 
     /** {@code true} if the build's work completed successfully. */
-    public boolean isSuccessful() {
-        return !isFailed();
-    }
+    boolean isSuccessful();
 
     /** The failure that occurred, if any. */
-    public Optional<Throwable> getFailure() {
-        return result.getFailure();
-    }
-
-    /** The underlying incubating result, for advanced use. */
-    public BuildWorkResult getBuildWorkResult() {
-        return result;
-    }
+    Optional<Throwable> getFailure();
 }

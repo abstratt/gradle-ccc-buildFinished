@@ -50,7 +50,7 @@ gradlePlugin {
     // Define the plugin
     val buildFlow by plugins.creating {
         id = "org.example.buildflow"
-        implementationClass = "org.example.buildflow.BuildFlowPlugin"
+        implementationClass = "org.example.internal.buildflow.BuildFlowPlugin"
     }
 }
 

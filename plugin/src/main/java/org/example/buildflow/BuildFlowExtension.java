@@ -1,10 +1,5 @@
 package org.example.buildflow;
 
-import org.gradle.api.flow.FlowProviders;
-import org.gradle.api.flow.FlowScope;
-import org.gradle.api.model.ObjectFactory;
-
-import javax.inject.Inject;
 import java.util.function.Consumer;
 
 /**
@@ -17,31 +12,7 @@ import java.util.function.Consumer;
  * state. When the behavior needs Gradle services, declare them on a {@link ServiceAccess} type and
  * use the {@link #onBuildFinished(Class, BuildFinishedAction)} overload.
  */
-public abstract class BuildFlowExtension {
-
-    private final FlowScope flowScope;
-    private final FlowProviders flowProviders;
-
-    @Inject
-    public BuildFlowExtension(FlowScope flowScope, FlowProviders flowProviders) {
-        this.flowScope = flowScope;
-        this.flowProviders = flowProviders;
-    }
-
-    @Inject
-    protected abstract ObjectFactory getObjectFactory();
-
-    /**
-     * Registers behavior to run when the build finishes, receiving the {@link BuildOutcome}.
-     *
-     * <p>The behavior is executed in an isolated context. Any state it holds is captured into the
-     * configuration cache, so it must be serializable and must not reference live build state.
-     *
-     * @param behavior the action to run once the build finishes
-     */
-    public void onBuildFinished(Consumer<BuildOutcome> behavior) {
-        register(new IgnoreServices(behavior), null);
-    }
+public interface BuildFlowExtension {
 
     /**
      * Registers behavior to run when the build finishes, receiving the {@link BuildOutcome} and a
@@ -52,38 +23,19 @@ public abstract class BuildFlowExtension {
      * it is never serialized — so injected services stay configuration-cache safe.
      *
      * @param serviceAccessType the {@link ServiceAccess} type declaring the required services
-     * @param behavior          the action to run once the build finishes
+     * @param action            the action to run once the build finishes
      * @param <S>               the service-access type
      */
-    @SuppressWarnings("unchecked")
-    public <S extends ServiceAccess> void onBuildFinished(
-            Class<S> serviceAccessType, BuildFinishedAction<? super S> action) {
-        S services = getObjectFactory().newInstance(serviceAccessType);
-        register((BuildFinishedAction<ServiceAccess>) action, services);
-    }
+    <S extends ServiceAccess> void onBuildFinished(
+            Class<S> serviceAccessType, BuildFinishedAction<? super S> action);
 
-    private void register(BuildFinishedAction<ServiceAccess> action, ServiceAccess services) {
-        flowScope.always(BuildFinishedFlowAction.class, spec -> {
-            spec.getParameters().getBuildResult().set(flowProviders.getBuildWorkResult());
-            spec.getParameters().getBehavior().set(action);
-            if (services != null) {
-                spec.getParameters().getServices().set(services);
-            }
-        });
-    }
-
-    /** Adapts a service-free {@link Consumer} to the internal {@link BuildFinishedAction} shape. */
-    private static final class IgnoreServices implements BuildFinishedAction<ServiceAccess> {
-
-        private final Consumer<BuildOutcome> delegate;
-
-        IgnoreServices(Consumer<BuildOutcome> delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public void execute(BuildOutcome outcome, ServiceAccess services) {
-            delegate.accept(outcome);
-        }
-    }
+    /**
+     * Registers behavior to run when the build finishes, receiving the {@link BuildOutcome}.
+     *
+     * <p>The behavior is executed in an isolated context. Any state it holds is captured into the
+     * configuration cache, so it must be serializable and must not reference live build state.
+     *
+     * @param behavior the action to run once the build finishes
+     */
+    void onBuildFinished(Consumer<BuildOutcome> behavior);
 }

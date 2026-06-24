@@ -11,16 +11,15 @@ package org.example.buildflow;
  * <p>For build-finished behavior that needs no services, use
  * {@link BuildFlowExtension#onBuildFinished(java.util.function.Consumer)} instead.
  *
- * @param <S> the {@link ServiceAccess} type declaring the services this action needs
+ * @param <SA> the {@link ServiceAccess} type declaring the services this action needs
  */
 @FunctionalInterface
-public interface BuildFinishedAction<S extends ServiceAccess> {
-
+public interface BuildFinishedAction<SA extends ServiceAccess> {
     /**
      * Invoked once the build has finished.
      *
      * @param outcome  whether the build succeeded or failed, and the failure if any
      * @param services the requested Gradle services
      */
-    void execute(BuildOutcome outcome, S services);
+    void execute(BuildOutcome outcome, SA services);
 }

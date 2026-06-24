@@ -1,5 +1,6 @@
-package org.example.buildflow;
+package org.example.internal.buildflow;
 
+import org.example.buildflow.BuildFlowExtension;
 import org.gradle.api.Plugin;
 import org.gradle.api.flow.FlowProviders;
 import org.gradle.api.flow.FlowScope;
@@ -26,6 +27,7 @@ public abstract class BuildFlowPlugin implements Plugin<ExtensionAware> {
     @Override
     public void apply(ExtensionAware target) {
         target.getExtensions().create(
-                "buildFlow", BuildFlowExtension.class, getFlowScope(), getFlowProviders());
+                BuildFlowExtension.class, "buildFlow", DefaultBuildFlowExtension.class,
+                getFlowScope(), getFlowProviders());
     }
 }

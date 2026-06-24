@@ -53,13 +53,12 @@ class BuildFlowPluginFunctionalTest extends Specification {
         }
     '''
 
-    /** A Java Gradle plugin that registers build-finished behavior via a named class. */
     /** A Java Gradle plugin that registers build-finished behavior via a (non-capturing) lambda. */
     private static final String LAMBDA_PLUGIN_JAVA = '''
         package com.example;
 
         import org.example.buildflow.BuildFlowExtension;
-        import org.example.buildflow.BuildFlowPlugin;
+        import org.example.internal.buildflow.BuildFlowPlugin;
         import org.gradle.api.Plugin;
         import org.gradle.api.Project;
 
@@ -316,7 +315,7 @@ class BuildFlowPluginFunctionalTest extends Specification {
                     package com.example;
             
                     import org.example.buildflow.BuildFlowExtension;
-                    import org.example.buildflow.BuildFlowPlugin;
+                    import org.example.internal.buildflow.BuildFlowPlugin;
                     import org.gradle.api.Plugin;
                     import org.gradle.api.Project;
             

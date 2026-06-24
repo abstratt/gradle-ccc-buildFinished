@@ -1,5 +1,8 @@
-package org.example.buildflow;
+package org.example.internal.buildflow;
 
+import org.example.buildflow.BuildFinishedAction;
+import org.example.buildflow.BuildOutcome;
+import org.example.buildflow.ServiceAccess;
 import org.gradle.api.flow.BuildWorkResult;
 import org.gradle.api.flow.FlowAction;
 import org.gradle.api.flow.FlowParameters;
@@ -10,9 +13,9 @@ import org.gradle.api.tasks.Optional;
 /**
  * Internal adapter: the single isolated {@link FlowAction} that backs the {@code buildFlow} DSL.
  *
- * <p>Consumers never see this type. They provide a plain consumer of {@link BuildOutcome}, which is
- * carried here as an isolated parameter and invoked once the build finishes. Using a Flow Action is
- * purely an implementation detail.
+ * <p>Consumers never see this type. They provide a plain {@link BuildFinishedAction}, which is carried
+ * here as an isolated parameter and invoked once the build finishes. Using a Flow Action is purely an
+ * implementation detail.
  *
  * <p>When a {@link ServiceAccess} bundle is supplied, it is created (decorated, with {@code @Inject}
  * services wired) by the DSL and passed in as a parameter; Gradle re-wires its services across the
@@ -39,7 +42,7 @@ public abstract class BuildFinishedFlowAction
 
     @Override
     public void execute(Parameters parameters) {
-        BuildOutcome outcome = new BuildOutcome(parameters.getBuildResult().get());
+        BuildOutcome outcome = new DefaultBuildOutcome(parameters.getBuildResult().get());
         ServiceAccess services = parameters.getServices().getOrNull();
         parameters.getBehavior().get().execute(outcome, services);
     }
