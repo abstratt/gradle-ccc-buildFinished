@@ -272,6 +272,48 @@ class BuildFinishedPluginFunctionalTest extends Specification {
         result.output.contains("something broke 💥")
     }
 
+    def "a handler that throws fails an otherwise successful build"() {
+        given:
+        file("settings.gradle") << ""
+        file("build.gradle") << """
+            plugins { id('org.example.buildfinished') }
+            buildFinished.onBuildFinished { outcome ->
+                assert outcome.successful
+                throw new RuntimeException('handler says no')
+            }
+        """
+
+        when: "a build that would otherwise succeed"
+        BuildResult result = runner("help").buildAndFail()
+
+        then: "the handler's exception becomes the build failure"
+        result.output.contains("handler says no")
+        result.output.contains("BUILD FAILED")
+    }
+
+    def "a handler that throws on an already-failed build adds to the failures"() {
+        given:
+        file("settings.gradle") << ""
+        file("build.gradle") << """
+            plugins { id('org.example.buildfinished') }
+            buildFinished.onBuildFinished { outcome ->
+                assert outcome.failed
+                // A handler cannot clear the existing failure (the outcome is read-only); throwing
+                // here reports an additional failure alongside the original.
+                throw new RuntimeException('handler also says no')
+            }
+            tasks.register('boom') { doLast { throw new RuntimeException('original kaboom') } }
+        """
+
+        when:
+        BuildResult result = runner("boom").buildAndFail()
+
+        then: "both the original failure and the handler's failure are reported"
+        result.output.contains("Build completed with 2 failures")
+        result.output.contains("original kaboom")
+        result.output.contains("handler also says no")
+    }
+
     def "is configuration cache compatible"() {
         given: "the plugin on the build's own classpath (a real, persisted classpath) rather than injected"
         // TestKit's injected plugin classpath is not a real classpath, so a build-script-defined
